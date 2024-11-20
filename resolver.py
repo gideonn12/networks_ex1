@@ -31,6 +31,8 @@ class Resolver:
             if version == "NS":
                 ip, port = ip.split(":")
                 query = self.send_and_return(ip, port, domain)
+                if query == "non-existent domain":
+                    return query
                 temp, ip, version = query.split(",")
                 return self.search_cache(domain+","+ip+":"+port+","+version)
         else:
@@ -90,7 +92,6 @@ if __name__ == "__main__":
     x = int(sys.argv[4])
 
     resolver = Resolver(myPort, parentIP, parentPort, x)
-    print("Resolver is listening on port", myPort)
     resolver.listen()
 
 # import time
