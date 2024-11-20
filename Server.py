@@ -16,7 +16,7 @@ class Server:
 
     def print_list(self):
         for i in self.list:
-            print(i)
+            print(f"{i['domain']},{i['ip']},{i['version']}")
 
     def load_file(self):
         with open(self.zone, "r") as f:
@@ -47,7 +47,7 @@ class Server:
             print(domain)
             ans = self.search_in_list(domain)
             if isinstance(ans, dict):
-                ans = str(ans)
+                ans = f"{ans['domain']},{ans['ip']},{ans['version']}"
             self.s.sendto(ans.encode(), addr)
 
 
@@ -56,5 +56,6 @@ if __name__ == '__main__':
     arg2 = sys.argv[2]
     s = Server(arg1, arg2)
     s.load_file()
-    s.listen()
+    # s.listen()
+    s.print_list()
 
