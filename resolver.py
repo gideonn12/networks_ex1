@@ -42,7 +42,7 @@ class Resolver:
             return self.cache[domain]
         # assume by convention that the ending of a domain starts with a '.'
         ending = '.'+'.'.join(domain.split('.', 1)[1:])
-        # TODO: fix this
+        # TODO: fix this + add timeout for cache
         if ending in self.cache:
             # TODO: send to the right IP and port
             res = self.send_and_return(ip, port, query)
