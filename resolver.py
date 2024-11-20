@@ -4,9 +4,6 @@ import sys
 
 class Resolver:
     def __init__(self, myPort, parentIP, parentPort, x):
-        # print all the arguments
-        print("myPort: ", myPort, "parentIP: ", parentIP,
-              "parentPort: ", parentPort, "x: ", x)
         self.cache = {}
         self.parentIP = parentIP
         self.parentPort = parentPort
@@ -15,47 +12,75 @@ class Resolver:
         self.s.bind(('', myPort))
 
     def send_and_return(self, ip, port, query):
-        self.s.sendto(query.encode(), (ip, port))
+        print("Sending query", query, "to", ip, "on port", port)
+        self.s.sendto(query.encode(), (ip, int(port)))
         data, addr = self.s.recvfrom(1024)
+        print("Received response:", data.decode())
         return data.decode()
 
     def search_cache(self, query):
         # filter the query to domain, IP and version, they are separated by a ","
-        domain, ip, version = query.split(",")
-        if version == "NA":
-            ip, port = ip.split(":")
+        if query == "non-existent domain":
+            return query
+        
+        if "," in query:
+            domain, ip, version = query.split(",")
+            if version == "A":
+                self.cache[domain] = query
+                return query
+            if version == "NS":
+                ip, port = ip.split(":")
+                query = self.send_and_return(ip, port, domain)
+                temp, ip, version = query.split(",")
+                return self.search_cache(domain+","+ip+":"+port+","+version)
+        else:
+            domain = query
+
         if domain in self.cache:
             return self.cache[domain]
         # assume by convention that the ending of a domain starts with a '.'
-        ending = '.'.join(domain.split('.', 1)[1:])
+        ending = '.'+'.'.join(domain.split('.', 1)[1:])
+        # TODO: fix this
         if ending in self.cache:
-
+            # TODO: send to the right IP and port
             res = self.send_and_return(ip, port, query)
             # filter again to get the domain, IP and version
+            # TODO: check again for "google.com" or long query
             domain, ip, version = res.split(",")
             if version == "A":
                 self.cache[domain] = res
                 return res
-            if res == "Non-existent":
+            if res == "non-existent domain":
                 return res
             else:
                 self.cache[domain] = res
                 ip, port = ip.split(":")
                 self.search_cache(ip, port, res)
-
         else:
             # if the domain is not in the cache, send the query to the parent
+            if domain == "google.com":
+                query = "google.com"
             res = self.send_and_return(self.parentIP, self.parentPort, query)
+            if res == "non-existent domain":
+                return res
+            # no way to return just google.com
+            
+            temp, ip, version = res.split(",")
+            if version == "A":
+                self.cache[domain] = res
+                return res
+            
+            return self.search_cache(res)
+            
 
     def listen(self):
         while True:
             data, addr = self.s.recvfrom(1024)
             query = data.decode()
-            print("Received query: ", query)
-            print("Searching cache for query: ", query)
-            # res = self.search_cache(query)
-        
-            
+            print("Received query:", query)
+            res = self.search_cache(query)
+            print("response:", res)
+            self.s.sendto(res.encode(), addr)
 
 
 if __name__ == "__main__":
@@ -65,6 +90,7 @@ if __name__ == "__main__":
     x = int(sys.argv[4])
 
     resolver = Resolver(myPort, parentIP, parentPort, x)
+    print("Resolver is listening on port", myPort)
     resolver.listen()
 
 # import time
