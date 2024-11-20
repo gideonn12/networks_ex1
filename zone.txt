@@ -3,3 +3,4 @@ gov.co.uk,3.4.5.6:8080,NS
 mywebsite.net,4.5.6.7,A
 school.ac.in,5.6.7.8:443,A  
 example.org,6.7.8.9,NS
+.com,172.20.10.3:4444,NS

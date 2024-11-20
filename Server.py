@@ -33,7 +33,7 @@ class Server:
             if i["domain"] == domain:
                 return i
         # case 2: end is in list
-        ending = '.'.join(domain.split('.', 1)[1:])
+        ending = '.'+'.'.join(domain.split('.', 1)[1:])
         for i in self.list:
             if i["domain"] == ending:
                 return i
@@ -48,6 +48,7 @@ class Server:
             ans = self.search_in_list(domain)
             if isinstance(ans, dict):
                 ans = f"{ans['domain']},{ans['ip']},{ans['version']}"
+            print(ans)
             self.s.sendto(ans.encode(), addr)
 
 
@@ -56,6 +57,5 @@ if __name__ == '__main__':
     arg2 = sys.argv[2]
     s = Server(arg1, arg2)
     s.load_file()
-    # s.listen()
-    s.print_list()
+    s.listen()
 
