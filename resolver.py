@@ -60,8 +60,6 @@ class Resolver:
                 self.search_cache(ip, port, res)
         else:
             # if the domain is not in the cache, send the query to the parent
-            if domain == "google.com":
-                query = "google.com"
             res = self.send_and_return(self.parentIP, self.parentPort, query)
             if res == "non-existent domain":
                 return res
@@ -71,8 +69,9 @@ class Resolver:
             if version == "A":
                 self.cache[domain] = res
                 return res
-            
-            return self.search_cache(res)
+            if version == "NS":
+                self.cache[domain] = res
+            return self.search_cache(domain+","+ip+","+version)
             
 
     def listen(self):
