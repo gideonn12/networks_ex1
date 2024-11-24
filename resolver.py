@@ -19,15 +19,98 @@ class Resolver:
         print("Received response:", data.decode())
         return data.decode()
 
+    def save_to_cache(self, domain, query):
+        # add the query to the cache with the domain as the key
+        self.cache[domain] = {"query": query, "time": datetime.now()}
+
+    def handle_direct_cache(self, query):
+        # handle the case where the query is in the cache
+        if query in self.cache:
+            return self.cache[query].get("query")
+        return None
+
+    def resolve_subdomain(self, domain):
+        # handle the case where the query is a subdomain
+        ending = domain[1:]
+        while ending:
+            if ending in self.cache:
+                return self.cache[ending].get("query")
+            ending = domain[1:]
+        return None
+
+    def handle_version_A(self, domain, query):
+        # handle the case where the query is of version A
+        self.save_to_cache(domain, query)
+        return query
+
+    def handle_version_NS(self, domain, query, ip, port):
+        # handle the case where the query is of version NS
+        self.save_to_cache(domain, query)
+        return self.send_and_return(f"{domain},{ip}:{port},NS")
+
+    def parse_query(self, query):
+        if "," in query:
+            return query.split(",")
+        return query, None, None
+
     def search_cache(self, query):
+        # Step 1: Handle non-existent domain, TODO: need to save in cache
+        if query == "non-existent domain":
+            return query
+
+        # Step 2: Parse the query
+        domain, ip, version = self.parse_query(query)
+
+        # Step 3: Check for direct match in cache
+        direct_match = self.handle_direct_cache(domain)
+        if direct_match:
+            return direct_match
+
+        # Step 4: Handle subdomain cache resolution
+        subdomain_result = self.resolve_subdomain(domain)
+        if subdomain_result:
+            data = self.send_and_return(subdomain_result)
+            return self.search_cache(data)
+
+        # Step 6: Process response based on version
+        temp, ip, version = response.split(",")
+        if version == "A":
+            return self.handle_version_a(domain, response)
+        if version == "NS":
+            ip, port = ip.split(":")
+            date = self.handle_version_ns(domain, response, ip, port)
+            return self.search_cache(data)
+
+        # Step 5: Query the parent resolver
+        response = self.send_and_return(self.parentIP, self.parentPort, query)
+        if response == "non-existent domain":
+            return response
+        temp, ip, version = response.split(",")
+        if version == "A":
+            return self.handle_version_a(domain, response)
+        if version == "NS":
+            ip, port = ip.split(":")
+            date = self.handle_version_ns(domain, response, ip, port)
+            return self.search_cache(data)
+
+    def listen(self):
+        while True:
+            data, addr = self.s.recvfrom(1024)
+            query = data.decode()
+            print("Received query:", query)
+            res = self.search_cache(query)
+            print("response:", res)
+            self.s.sendto(res.encode(), addr)
+
         # filter the query to domain, IP and version, they are separated by a ","
         if query == "non-existent domain":
             return query
-        
+
         if "," in query:
             domain, ip, version = query.split(",")
             if version == "A":
-                self.cache[domain] = {"query":query, "time": datetime.now()} #TODO: change in code to match query field in cache dict
+                # TODO: change in code to match query field in cache dict
+                self.cache[domain] = {"query": query, "time": datetime.now()}
                 return query
             if version == "NS":
                 ip, port = ip.split(":")
@@ -42,36 +125,28 @@ class Resolver:
         if domain in self.cache:
             return self.cache[domain].get("query")
         # assume by convention that the ending of a domain starts with a '.'
-        ending = '.'+'.'.join(domain.split('.', 1)[1:])
-        # TODO: fix this + add timeout for cache
-        res = None
-        if ending in self.cache: 
+        ending = domain[1:]
+
+        if ending in self.cache:
             domain_to_send = self.cache[ending].get("query").split(":")
-            res = self.send_and_return(domain_to_send[0], domain_to_send[1], domain)
+            res = self.send_and_return(
+                domain_to_send[0], domain_to_send[1], domain)
         else:
             # if the domain is not in the cache, send the query to the parent
-            res = self.send_and_return(self.parentIP, self.parentPort, query)  
+            res = self.send_and_return(self.parentIP, self.parentPort, query)
         if res == "non-existent domain":
             return res
         # no way to return just google.com
-        
+
         temp, ip, version = res.split(",")
         if version == "A":
-            self.cache[domain] = res # TODO: change in code to match query field in cache dict
+            # TODO: change in code to match query field in cache dict
+            self.cache[domain] = res
             return res
         if version == "NS":
-            self.cache[domain] = res # TODO: change in code to match query field in cache dict
+            # TODO: change in code to match query field in cache dict
+            self.cache[domain] = res
         return self.search_cache(domain+","+ip+","+version)
-            
-
-    def listen(self):
-        while True:
-            data, addr = self.s.recvfrom(1024)
-            query = data.decode()
-            print("Received query:", query)
-            res = self.search_cache(query)
-            print("response:", res)
-            self.s.sendto(res.encode(), addr)
 
 
 if __name__ == "__main__":
