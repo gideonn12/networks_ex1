@@ -32,13 +32,13 @@ class Server:
         for i in self.list:
             if i["domain"] == domain:
                 return i
-        # case 2: end is in list
-        ending = '.'+'.'.join(domain.split('.', 1)[1:])
+        # case 2: check for subdomains in list
         for i in self.list:
-            if i["domain"] == ending:
+            if domain.endswith(i["domain"]):
                 return i
         # case 3: domain is not in list
-        return "non-existent domain"
+        else:
+            return "non-existent domain"
 
     def listen(self):
         while True:
@@ -58,4 +58,3 @@ if __name__ == '__main__':
     s = Server(arg1, arg2)
     s.load_file()
     s.listen()
-
