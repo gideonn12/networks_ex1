@@ -22,6 +22,7 @@ class Resolver:
     def save_to_cache(self, domain, query):
         # add the query to the cache with the domain as the key
         self.cache[domain] = {"query": query, "time": datetime.now()}
+        print("Saved to cache:", domain, query)
 
     def handle_direct_cache(self, query):
         # handle the case where the query is in the cache
@@ -35,7 +36,7 @@ class Resolver:
         while ending:
             if ending in self.cache:
                 return self.cache[ending].get("query")
-            ending = domain[1:]
+            ending = ending[1:]
         return None
 
     def handle_version_A(self, domain, query):
@@ -43,10 +44,12 @@ class Resolver:
         self.save_to_cache(domain, query)
         return query
 
-    def handle_version_NS(self, domain, query, ip, port):
+    def handle_version_NS(self, query, ip, port):
         # handle the case where the query is of version NS
+        domain, ip, version = query.split(",")
+        ip, port = ip.split(":")
         self.save_to_cache(domain, query)
-        return self.send_and_return(f"{domain},{ip}:{port},NS")
+        return self.send_and_return(ip, port, domain)
 
     def parse_query(self, query):
         if "," in query:
@@ -57,9 +60,16 @@ class Resolver:
         # Step 1: Handle non-existent domain, TODO: need to save in cache
         if query == "non-existent domain":
             return query
-
+        
         # Step 2: Parse the query
         domain, ip, version = self.parse_query(query)
+        
+        if version == "A":
+            return self.handle_version_A(domain, query)
+        if version == "NS":
+            ip, port = ip.split(":")
+            data = self.handle_version_NS(query, ip, port)
+            return self.search_cache(data)
 
         # Step 3: Check for direct match in cache
         direct_match = self.handle_direct_cache(domain)
@@ -69,16 +79,19 @@ class Resolver:
         # Step 4: Handle subdomain cache resolution
         subdomain_result = self.resolve_subdomain(domain)
         if subdomain_result:
-            data = self.send_and_return(subdomain_result)
+            # filter the query to domain, IP and version, they are separated by a ","
+            domain, ip, version = subdomain_result.split(",")
+            ip, port = ip.split(":")
+            data = self.send_and_return(ip, port, domain)
             return self.search_cache(data)
 
         # Step 6: Process response based on version
-        temp, ip, version = response.split(",")
         if version == "A":
-            return self.handle_version_a(domain, response)
+            return self.handle_version_A(domain, query)
+            print("please stop1")
         if version == "NS":
             ip, port = ip.split(":")
-            date = self.handle_version_ns(domain, response, ip, port)
+            date = self.handle_version_NS(query, ip, port)
             return self.search_cache(data)
 
         # Step 5: Query the parent resolver
@@ -87,10 +100,11 @@ class Resolver:
             return response
         temp, ip, version = response.split(",")
         if version == "A":
-            return self.handle_version_a(domain, response)
+            return self.handle_version_A(domain, response)
+            print("please stop2")
         if version == "NS":
             ip, port = ip.split(":")
-            date = self.handle_version_ns(domain, response, ip, port)
+            data = self.handle_version_NS(response, ip, port)
             return self.search_cache(data)
 
     def listen(self):
@@ -150,10 +164,17 @@ class Resolver:
 
 
 if __name__ == "__main__":
-    myPort = int(sys.argv[1])
-    parentIP = sys.argv[2]
-    parentPort = int(sys.argv[3])
-    x = int(sys.argv[4])
+    myPort = 12345
+    parentIP = "172.20.10.3"
+    parentPort = 7777
+    x = 60
+    
+    
+
+    # myPort = int(sys.argv[1])
+    # parentIP = sys.argv[2]
+    # parentPort = int(sys.argv[3])
+    # x = float(sys.argv[4])
 
     resolver = Resolver(myPort, parentIP, parentPort, x)
     resolver.listen()
