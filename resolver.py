@@ -26,6 +26,8 @@ class Resolver:
 
     def handle_direct_cache(self, query):
         # handle the case where the query is in the cache
+        # clear the cache of expired entries
+        self.clear_cache()
         if query in self.cache:
             return self.cache[query].get("query")
         return None
@@ -33,7 +35,9 @@ class Resolver:
     def resolve_subdomain(self, domain):
         # handle the case where the query is a subdomain
         ending = domain[1:]
+        self.clear_cache()
         while ending:
+            # clear the cache of expired entries
             if ending in self.cache:
                 return self.cache[ending].get("query")
             ending = ending[1:]
@@ -55,6 +59,16 @@ class Resolver:
         if "," in query:
             return query.split(",")
         return query, None, None
+    
+    def clear_cache(self):
+        # clear the cache of expired entries
+        current_time = datetime.now()
+        lst = []
+        for domain, data in self.cache.items():
+            if (current_time - data.get("time")).seconds > self.cache_timeout:
+                lst.append(domain)
+        for domain in lst:
+            del self.cache[domain]
 
     def search_cache(self, query):
         # Step 1: Handle non-existent domain, TODO: need to save in cache
@@ -163,18 +177,12 @@ class Resolver:
         return self.search_cache(domain+","+ip+","+version)
 
 
-if __name__ == "__main__":
-    myPort = 12345
-    parentIP = "172.20.10.3"
-    parentPort = 7777
-    x = 60
-    
-    
+if __name__ == "__main__":   
 
-    # myPort = int(sys.argv[1])
-    # parentIP = sys.argv[2]
-    # parentPort = int(sys.argv[3])
-    # x = float(sys.argv[4])
+    myPort = int(sys.argv[1])
+    parentIP = sys.argv[2]
+    parentPort = int(sys.argv[3])
+    x = float(sys.argv[4])
 
     resolver = Resolver(myPort, parentIP, parentPort, x)
     resolver.listen()
