@@ -1,3 +1,4 @@
+from datetime import datetime
 import socket
 import sys
 
@@ -26,7 +27,7 @@ class Resolver:
         if "," in query:
             domain, ip, version = query.split(",")
             if version == "A":
-                self.cache[domain] = query
+                self.cache[domain] = {"query":query, "time": datetime.now()} #TODO: change in code to match query field in cache dict
                 return query
             if version == "NS":
                 ip, port = ip.split(":")
@@ -39,39 +40,28 @@ class Resolver:
             domain = query
 
         if domain in self.cache:
-            return self.cache[domain]
+            return self.cache[domain].get("query")
         # assume by convention that the ending of a domain starts with a '.'
         ending = '.'+'.'.join(domain.split('.', 1)[1:])
         # TODO: fix this + add timeout for cache
-        if ending in self.cache:
-            # TODO: send to the right IP and port
-            res = self.send_and_return(ip, port, query)
-            # filter again to get the domain, IP and version
-            # TODO: check again for "google.com" or long query
-            domain, ip, version = res.split(",")
-            if version == "A":
-                self.cache[domain] = res
-                return res
-            if res == "non-existent domain":
-                return res
-            else:
-                self.cache[domain] = res
-                ip, port = ip.split(":")
-                self.search_cache(ip, port, res)
+        res = None
+        if ending in self.cache: 
+            domain_to_send = self.cache[ending].get("query").split(":")
+            res = self.send_and_return(domain_to_send[0], domain_to_send[1], domain)
         else:
             # if the domain is not in the cache, send the query to the parent
-            res = self.send_and_return(self.parentIP, self.parentPort, query)
-            if res == "non-existent domain":
-                return res
-            # no way to return just google.com
-            
-            temp, ip, version = res.split(",")
-            if version == "A":
-                self.cache[domain] = res
-                return res
-            if version == "NS":
-                self.cache[domain] = res
-            return self.search_cache(domain+","+ip+","+version)
+            res = self.send_and_return(self.parentIP, self.parentPort, query)  
+        if res == "non-existent domain":
+            return res
+        # no way to return just google.com
+        
+        temp, ip, version = res.split(",")
+        if version == "A":
+            self.cache[domain] = res # TODO: change in code to match query field in cache dict
+            return res
+        if version == "NS":
+            self.cache[domain] = res # TODO: change in code to match query field in cache dict
+        return self.search_cache(domain+","+ip+","+version)
             
 
     def listen(self):
