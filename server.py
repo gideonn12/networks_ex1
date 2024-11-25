@@ -30,8 +30,9 @@ class Server:
             if i["domain"] == domain:
                 return i
         # case 2: check for subdomains in list
+        # if version == A skip this
         for i in self.list:
-            if domain.endswith(i["domain"]):
+            if i["version"] == "NS" and domain.endswith(i["domain"]):
                 return i
         # case 3: domain is not in list
         else:
