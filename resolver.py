@@ -59,7 +59,7 @@ class Resolver:
         if "," in query:
             return query.split(",")
         return query, None, None
-    
+
     def clear_cache(self):
         # clear the cache of expired entries
         current_time = datetime.now()
@@ -74,10 +74,10 @@ class Resolver:
         # Step 1: Handle non-existent domain, TODO: need to save in cache
         if query == "non-existent domain":
             return query
-        
+
         # Step 2: Parse the query
         domain, ip, version = self.parse_query(query)
-        
+
         if version == "A":
             return self.handle_version_A(domain, query)
         if version == "NS":
@@ -102,10 +102,9 @@ class Resolver:
         # Step 6: Process response based on version
         if version == "A":
             return self.handle_version_A(domain, query)
-            print("please stop1")
         if version == "NS":
             ip, port = ip.split(":")
-            date = self.handle_version_NS(query, ip, port)
+            data = self.handle_version_NS(query, ip, port)
             return self.search_cache(data)
 
         # Step 5: Query the parent resolver
@@ -115,7 +114,6 @@ class Resolver:
         temp, ip, version = response.split(",")
         if version == "A":
             return self.handle_version_A(domain, response)
-            print("please stop2")
         if version == "NS":
             ip, port = ip.split(":")
             data = self.handle_version_NS(response, ip, port)
@@ -130,55 +128,8 @@ class Resolver:
             print("response:", res)
             self.s.sendto(res.encode(), addr)
 
-        # filter the query to domain, IP and version, they are separated by a ","
-        if query == "non-existent domain":
-            return query
 
-        if "," in query:
-            domain, ip, version = query.split(",")
-            if version == "A":
-                # TODO: change in code to match query field in cache dict
-                self.cache[domain] = {"query": query, "time": datetime.now()}
-                return query
-            if version == "NS":
-                ip, port = ip.split(":")
-                query = self.send_and_return(ip, port, domain)
-                if query == "non-existent domain":
-                    return query
-                temp, ip, version = query.split(",")
-                return self.search_cache(domain+","+ip+":"+port+","+version)
-        else:
-            domain = query
-
-        if domain in self.cache:
-            return self.cache[domain].get("query")
-        # assume by convention that the ending of a domain starts with a '.'
-        ending = domain[1:]
-
-        if ending in self.cache:
-            domain_to_send = self.cache[ending].get("query").split(":")
-            res = self.send_and_return(
-                domain_to_send[0], domain_to_send[1], domain)
-        else:
-            # if the domain is not in the cache, send the query to the parent
-            res = self.send_and_return(self.parentIP, self.parentPort, query)
-        if res == "non-existent domain":
-            return res
-        # no way to return just google.com
-
-        temp, ip, version = res.split(",")
-        if version == "A":
-            # TODO: change in code to match query field in cache dict
-            self.cache[domain] = res
-            return res
-        if version == "NS":
-            # TODO: change in code to match query field in cache dict
-            self.cache[domain] = res
-        return self.search_cache(domain+","+ip+","+version)
-
-
-if __name__ == "__main__":   
-
+if __name__ == "__main__":
     myPort = int(sys.argv[1])
     parentIP = sys.argv[2]
     parentPort = int(sys.argv[3])
@@ -186,34 +137,3 @@ if __name__ == "__main__":
 
     resolver = Resolver(myPort, parentIP, parentPort, x)
     resolver.listen()
-
-# import time
-
-# def search_cache(self, query, timeout):
-#     # filter the query to domain, IP and version, they are separated by a ","
-#     domain, ip, version = query.split(",")
-#     if version == "NA":
-#         ip, port = ip.split(":")
-
-#     current_time = time.time()
-
-#     if domain in self.cache:
-#         value, timestamp = self.cache[domain]
-#         if current_time - timestamp < timeout:
-#             return value
-#         else:
-#             del self.cache[domain]  # Remove expired record
-
-#     # assume by convention that the ending of a domain starts with a '.'
-#     ending = '.'.join(domain.split('.', 1)[1:])
-#     if ending in self.cache:
-#         value, timestamp = self.cache[ending]
-#         if current_time - timestamp < timeout:
-#             return value
-#         else:
-#             del self.cache[ending]  # Remove expired record
-
-#     res = self.send_and_return(ip, port, query)
-#     # filter again to get the domain, IP and version
-#     self.cache[domain] = (res, current_time)  # Store the result with the current timestamp
-#     return res
