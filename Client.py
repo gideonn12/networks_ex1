@@ -7,7 +7,6 @@ def main():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ip = sys.argv[1]
     port = int(sys.argv[2])
-    #'172.20.10.2', 12345)
     while True:
         # take input from the user and send it to the server
         to_send = input()
