@@ -14,11 +14,8 @@ class Server:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s.bind(('', port))
 
-    def print_list(self):
-        for i in self.list:
-            print(f"{i['domain']},{i['ip']},{i['version']}")
-
     def load_file(self):
+        # load the file into a list
         with open(self.zone, "r") as f:
             for line in f:
                 domain, ip, version = line.split(",")
@@ -44,11 +41,10 @@ class Server:
         while True:
             data, addr = self.s.recvfrom(1024)
             domain = data.decode()
-            print(domain)
             ans = self.search_in_list(domain)
+            # format the answer and send it back
             if isinstance(ans, dict):
                 ans = f"{ans['domain']},{ans['ip']},{ans['version']}"
-            print(ans)
             self.s.sendto(ans.encode(), addr)
 
 
