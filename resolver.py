@@ -13,12 +13,8 @@ class Resolver:
         self.s.bind(('', myPort))
 
     def send_and_return(self, ip, port, query):
-        # print the query and send it to the server
-        print(f"Querying {ip}:{port} for {query}")
         self.s.sendto(query.encode(), (ip, int(port)))
         data, addr = self.s.recvfrom(1024)
-        # print the response and return it
-        print(f"Received response: {data.decode()}")
         return data.decode()
 
     def save_to_cache(self, domain, query):
@@ -93,7 +89,6 @@ class Resolver:
         # Step 3: Check for direct match in cache
         direct_match = self.handle_direct_cache(domain)
         if direct_match:
-            print("Direct match found in cache")
             return direct_match
 
         # Step 4: Handle subdomain cache resolution
@@ -114,8 +109,6 @@ class Resolver:
             return self.search_cache(data, original_query)
 
         # Step 5: Query the parent resolver
-        # print the query and send it to the server
-        print(f"Querying {self.parentIP}:{self.parentPort} for {original_query}")
         response = self.send_and_return(self.parentIP, self.parentPort, original_query)
         if response == "non-existent domain":
             # first save the query in the cache
@@ -131,14 +124,10 @@ class Resolver:
 
     def listen(self):
         while True:
-            print("Listening...")
             data, addr = self.s.recvfrom(1024)
             query = data.decode()
-            print(f"Received query: {query}")
             res = self.search_cache(query, query)
-            print(f"Sending response: {res}")
             self.s.sendto(res.encode(), addr)
-            
 
 
 if __name__ == "__main__":
@@ -146,7 +135,6 @@ if __name__ == "__main__":
     parentIP = sys.argv[2]
     parentPort = int(sys.argv[3])
     x = float(sys.argv[4])
-    print("here")
 
     resolver = Resolver(myPort, parentIP, parentPort, x)
     resolver.listen()
