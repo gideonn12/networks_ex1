@@ -13,8 +13,12 @@ class Resolver:
         self.s.bind(('', myPort))
 
     def send_and_return(self, ip, port, query):
+        # print the query and send it to the server
+        print(f"Querying {ip}:{port} for {query}")
         self.s.sendto(query.encode(), (ip, int(port)))
         data, addr = self.s.recvfrom(1024)
+        # print the response and return it
+        print(f"Received response: {data.decode()}")
         return data.decode()
 
     def save_to_cache(self, domain, query):
@@ -71,7 +75,7 @@ class Resolver:
         for domain in lst:
             del self.cache[domain]
 
-    def search_cache(self, query):
+    def search_cache(self, query, original_query):
         # Step 1: Handle non-existent domain
         if query == "non-existent domain":
             return query
@@ -83,8 +87,8 @@ class Resolver:
             return self.handle_version_A(domain, query)
         if version == "NS":
             ip, port = ip.split(":")
-            data = self.handle_version_NS(query, ip, port, domain)
-            return self.search_cache(data)
+            data = self.handle_version_NS(query, ip, port, original_query)
+            return self.search_cache(data, original_query)
 
         # Step 3: Check for direct match in cache
         direct_match = self.handle_direct_cache(domain)
@@ -98,19 +102,21 @@ class Resolver:
             # filter the query to domain, IP and version, they are separated by a ","
             domain, ip, version = subdomain_result.split(",")
             ip, port = ip.split(":")
-            data = self.send_and_return(ip, port, domain)
-            return self.search_cache(data)
+            data = self.send_and_return(ip, port, original_query)
+            return self.search_cache(data, original_query)
 
         # Step 6: Process response based on version
         if version == "A":
             return self.handle_version_A(domain, query)
         if version == "NS":
             ip, port = ip.split(":")
-            data = self.handle_version_NS(query, ip, port, domain)
-            return self.search_cache(data)
+            data = self.handle_version_NS(query, ip, port, original_query)
+            return self.search_cache(data, original_query)
 
         # Step 5: Query the parent resolver
-        response = self.send_and_return(self.parentIP, self.parentPort, query)
+        # print the query and send it to the server
+        print(f"Querying {self.parentIP}:{self.parentPort} for {original_query}")
+        response = self.send_and_return(self.parentIP, self.parentPort, original_query)
         if response == "non-existent domain":
             # first save the query in the cache
             self.save_to_cache(domain, response)
@@ -120,15 +126,19 @@ class Resolver:
             return self.handle_version_A(domain, response)
         if version == "NS":
             ip, port = ip.split(":")
-            data = self.handle_version_NS(response, ip, port, domain)
-            return self.search_cache(data)
+            data = self.handle_version_NS(response, ip, port, original_query)
+            return self.search_cache(data, original_query)
 
     def listen(self):
         while True:
+            print("Listening...")
             data, addr = self.s.recvfrom(1024)
             query = data.decode()
-            res = self.search_cache(query)
+            print(f"Received query: {query}")
+            res = self.search_cache(query, query)
+            print(f"Sending response: {res}")
             self.s.sendto(res.encode(), addr)
+            
 
 
 if __name__ == "__main__":
@@ -136,6 +146,7 @@ if __name__ == "__main__":
     parentIP = sys.argv[2]
     parentPort = int(sys.argv[3])
     x = float(sys.argv[4])
+    print("here")
 
     resolver = Resolver(myPort, parentIP, parentPort, x)
     resolver.listen()
