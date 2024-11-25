@@ -72,7 +72,7 @@ class Resolver:
             del self.cache[domain]
 
     def search_cache(self, query):
-        # Step 1: Handle non-existent domain, TODO: need to save in cache
+        # Step 1: Handle non-existent domain
         if query == "non-existent domain":
             return query
 
@@ -89,6 +89,7 @@ class Resolver:
         # Step 3: Check for direct match in cache
         direct_match = self.handle_direct_cache(domain)
         if direct_match:
+            print("Direct match found in cache")
             return direct_match
 
         # Step 4: Handle subdomain cache resolution
@@ -111,6 +112,8 @@ class Resolver:
         # Step 5: Query the parent resolver
         response = self.send_and_return(self.parentIP, self.parentPort, query)
         if response == "non-existent domain":
+            # first save the query in the cache
+            self.save_to_cache(domain, response)
             return response
         temp, ip, version = response.split(",")
         if version == "A":
