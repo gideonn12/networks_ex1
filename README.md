@@ -1,7 +1,5 @@
-# networks_ex1
-
 # Digital 144 Service Simulation
-Overview
+# Overview
 
 This project simulates a digital 144-style service. The goal is to implement a UDP server that can respond to queries about domain-to-IP mappings. Unlike the traditional 144 telephone service (which maps names to phone numbers), this service maps domain names to IP addresses.
 
@@ -11,7 +9,7 @@ Authoritative Server: Loads a zone.txt file containing domain-to-IP mappings and
 Resolver Server: Acts as a DNS resolver, forwarding queries to a parent authoritative server, caching responses, and serving subsequent queries from the cache for a specified time.
 Client: Sends domain queries to the resolver server and displays the IP address or an error message.
 
-Components
+# Components
 Authoritative Server
 
 Functionality:
@@ -36,7 +34,7 @@ Usage:
         myPort: Port for the server to bind and listen on.
         zoneFileName: Path to the zone.txt file containing domain mappings.
 
-Resolver Server
+# Resolver Server
 
 Functionality:
         Forwards queries to a parent authoritative server if the requested domain is not in its cache.
@@ -53,7 +51,7 @@ Functionality:
         parentPort: Port of the parent authoritative server.
         x: Time (in seconds) for which cached entries remain valid.
 
-Client
+# Client
 
 Functionality:
         Sends domain queries to the resolver server and displays the corresponding IP address (or error message) received.
@@ -66,7 +64,7 @@ Functionality:
         serverIP: IP address of the resolver server.
         serverPort: Port of the resolver server.
 
-Example Usage
+# Example Usage
 Files
 
 zone.txt:
