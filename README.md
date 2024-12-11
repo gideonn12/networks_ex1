@@ -106,7 +106,7 @@ Client interaction example:
     Input: mail.google.co.il
     Output: 1.2.3.9
 
-Notes
+# Notes
 
 Protocol: Communication between all components occurs using UDP.
 Caching: The resolver caches both A and NS records. Expired entries are removed after x seconds.
