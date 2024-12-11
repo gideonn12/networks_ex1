@@ -1,20 +1,20 @@
 # networks_ex1
 
-Digital 144 Service Simulation
+#Digital 144 Service Simulation
 Overview
 
 This project simulates a digital 144-style service. The goal is to implement a UDP server that can respond to queries about domain-to-IP mappings. Unlike the traditional 144 telephone service (which maps names to phone numbers), this service maps domain names to IP addresses.
 
 The project includes three components:
 
-    Authoritative Server: Loads a zone.txt file containing domain-to-IP mappings and responds to queries based on it.
-    Resolver Server: Acts as a DNS resolver, forwarding queries to a parent authoritative server, caching responses, and serving subsequent queries from the cache for a specified time.
-    Client: Sends domain queries to the resolver server and displays the IP address or an error message.
+Authoritative Server: Loads a zone.txt file containing domain-to-IP mappings and responds to queries based on it.
+Resolver Server: Acts as a DNS resolver, forwarding queries to a parent authoritative server, caching responses, and serving subsequent queries from the cache for a specified time.
+Client: Sends domain queries to the resolver server and displays the IP address or an error message.
 
 Components
 Authoritative Server
 
-    Functionality:
+Functionality:
         Loads mappings from a zone.txt file at startup. Each line in the file represents a mapping in the format:
         <domain>,<IP or IP:port>,<type>
         Example:
@@ -38,7 +38,7 @@ Usage:
 
 Resolver Server
 
-    Functionality:
+Functionality:
         Forwards queries to a parent authoritative server if the requested domain is not in its cache.
         Caches responses for x seconds, after which cached entries expire.
         Handles chains of nameserver referrals to resolve domains fully.
@@ -55,7 +55,7 @@ Resolver Server
 
 Client
 
-    Functionality:
+Functionality:
         Sends domain queries to the resolver server and displays the corresponding IP address (or error message) received.
 
     Usage:
@@ -108,12 +108,12 @@ Client interaction example:
 
 Notes
 
-    Protocol: Communication between all components occurs using UDP.
-    Caching: The resolver caches both A and NS records. Expired entries are removed after x seconds.
-    Error Handling: If a domain cannot be resolved, the server returns non-existent domain.
+Protocol: Communication between all components occurs using UDP.
+Caching: The resolver caches both A and NS records. Expired entries are removed after x seconds.
+Error Handling: If a domain cannot be resolved, the server returns non-existent domain.
 
 Implementation Details
 
-    All components are implemented in Python.
-    Arguments to main must be passed via the command line.
-    Ensure strict adherence to input/output formats.
+All components are implemented in Python.
+Arguments to main must be passed via the command line.
+Ensure strict adherence to input/output formats.
