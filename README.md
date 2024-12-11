@@ -6,7 +6,9 @@ This project simulates a digital 144-style service. The goal is to implement a U
 The project includes three components:
 
 Authoritative Server: Loads a zone.txt file containing domain-to-IP mappings and responds to queries based on it.
+
 Resolver Server: Acts as a DNS resolver, forwarding queries to a parent authoritative server, caching responses, and serving subsequent queries from the cache for a specified time.
+
 Client: Sends domain queries to the resolver server and displays the IP address or an error message.
 
 # Components
