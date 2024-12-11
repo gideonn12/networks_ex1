@@ -1,6 +1,6 @@
 # networks_ex1
 
-#Digital 144 Service Simulation
+# Digital 144 Service Simulation
 Overview
 
 This project simulates a digital 144-style service. The goal is to implement a UDP server that can respond to queries about domain-to-IP mappings. Unlike the traditional 144 telephone service (which maps names to phone numbers), this service maps domain names to IP addresses.
